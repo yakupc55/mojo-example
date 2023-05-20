@@ -133,30 +133,11 @@ struct Matrix3:
 
 
 ```mojo
-struct MatrixTools:
-    fn __init__(inout self):
-        pass
-    fn getMeanIndexMatrix(self,matrix : Matrix,index: Int)->F64:
-        let size :Int = matrix.cols
-        var result:F64 = (matrix[index,0]+matrix[index,1])/2.0
+fn getMeanIndexList(array : Array[F64])->F64:
+        let size :Int = array.size
+        var result:F64 = (array[0]+array[1])/2.0
         for i in range(2,size):
-            result = result + ((matrix[index,i] - result)/(i+1)) 
-        return result
-    fn getMeanIndexList(self,cList : CList)->F64:
-        let size :Int = cList.size
-        var result:F64 = (cList[0]+cList[1])/2.0
-        for i in range(2,size):
-            result = result + ((cList[i] - result)/(i+1)) 
-        return result
-```
-
-
-```mojo
-fn getMeanIndexList(cList : CList)->F64:
-        let size :Int = cList.size
-        var result:F64 = (cList[0]+cList[1])/2.0
-        for i in range(2,size):
-            result = result + ((cList[i] - result)/(i+1)) 
+            result = result + ((array[i] - result)/(i+1)) 
         return result
 fn getMeanIndexMatrix(matrix : Matrix,index: Int)->F64:
     let size :Int = matrix.cols
@@ -170,7 +151,6 @@ fn splitOutput(value:F64,size:Int)->Array[F64]:
     let number:F64 = value/size
     for i in range(size):
         array[i] = number
-        # print(i,number,cList[i])
     return array
 
 fn sumOutput(array:Array[F64])->F64:
@@ -179,7 +159,6 @@ fn sumOutput(array:Array[F64])->F64:
     # print("size",size)
     for i in range(size):
         total = total + array[i]
-        # print(i,cList[i],total)
     return total
 
 fn toInt(num:F64)->Int:
@@ -408,7 +387,7 @@ test1.backwardFeed(splitOutput(F64(myArray[100]),4))
 print(test1.weights[3,2,3])
 ```
 
-    0.245991
+    0.101681
 
 
 
@@ -459,7 +438,7 @@ var result = second-first
 print(result,"ns",result/1000000.0,"ms",result/1000000000.0,"sn")
 ```
 
-    966059 ns 0.966059 ms 0.000966 sn
+    960657 ns 0.960657 ms 0.000961 sn
 
 
 
@@ -467,11 +446,11 @@ print(result,"ns",result/1000000.0,"ms",result/1000000000.0,"sn")
 testIrisNetworkRate(test1,myMatrix,myArray)
 ```
 
-    2.573220 2
-    2.336453 3
-    2.212024 3
-    2.328228 3
-    2.293025 3
+    2.572899 2
+    2.335017 3
+    2.208791 3
+    2.326274 3
+    2.289762 3
     success rate: 96.666667 %
 
 
@@ -495,6 +474,9 @@ printArray(splitOutput(F64(myArray[0]+1),4))
 ```mojo
 print(test1.weights[3,2,3])
 ```
+
+    0.156587
+
 
 
 ```mojo
