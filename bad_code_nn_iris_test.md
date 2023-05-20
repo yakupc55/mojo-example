@@ -52,44 +52,6 @@ struct Array[Type: AnyType]:
 
 
 ```mojo
-struct CList:
-    var size:Int
-    var data:Pointer[F64]
-    
-    fn __init__(inout self,size:Int):
-        self.size = size
-        self.data = Pointer[F64].alloc(size)
-        
-    fn __init__(inout self,size:Int,cList:CList):
-        self.size = size
-        self.data = Pointer[F64].alloc(size)
-        for i in range(size):
-            self.data.store(i,cList[i])
-        
-    fn zero(inout self):
-        memset_zero(self.data, self.size)
-        
-    fn __del__(owned self):
-        self.data.free()
-        
-    fn autoAdd(self,start: F64,add: F64):
-        var current:F64 = 0.0
-        current = current + start
-        for i in range(self.size):
-            self.data.store(i,current)
-            current = add+ current
-            
-    @always_inline
-    fn __getitem__(self,  x: Int) -> F64:
-        return self.data.load(x)
-    
-    @always_inline
-    fn __setitem__(self, x: Int, val: F64):
-        return self.data.store(x,val)
-```
-
-
-```mojo
 struct Matrix:
     var data: DTypePointer[DType.f64]
     var rows: Int
