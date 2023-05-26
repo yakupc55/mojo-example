@@ -226,7 +226,10 @@ struct List[Type: AnyType]:
     fn __setitem__(self, i: Int,value:Type):
         return self.data.load(0).store(i,value)
             
-    fn __getitem__(self, i: Int) -> Type:
+    fn __getitem__(self, x: Int) -> Type:
+        var i = x
+        if i<0:
+            i = self.size()-i
         return self.data.load(0).load(i)
     
     fn __getitem__(self, s:slice) -> Pointer[Type]:
@@ -294,6 +297,14 @@ struct ListManager:
             let new = array[i]
             Self.print3D(new)
         print("]")
+        
+    @staticmethod
+    fn getMeanList(inList :List[F64])->F64:
+        let size :Int = inList.size()
+        var result:F64 = (inList[0]/2.0)+(inList[1]/2.0)
+        for i in range(2,size):
+            result = result + ((inList[i] - result)/(i+1)) 
+        return result
 ```
 
 
@@ -417,11 +428,8 @@ ListManager.print3D(test5)
     2d[
     [8,45,45,9,9,9,9,9,9,9,9,8,]
     [8,45,45,9,9,9,9,9,9,9,]
+    [8,45,45,9,9,9,9,9,9,9,]
+    [8,45,45,9,9,9,9,9,9,9,]
     ]
     ]
 
-
-
-```mojo
-
-```
