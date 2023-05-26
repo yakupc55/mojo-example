@@ -229,7 +229,7 @@ struct List[Type: AnyType]:
     fn __getitem__(self, x: Int) -> Type:
         var i = x
         if i<0:
-            i = self.size()-i
+            i = self.size()+i
         return self.data.load(0).load(i)
     
     fn __getitem__(self, s:slice) -> Pointer[Type]:
@@ -433,3 +433,17 @@ ListManager.print3D(test5)
     ]
     ]
 
+
+
+```mojo
+test2[-1].add(5)
+test2[-1].printArray()
+```
+
+    [8,45,45,9,9,9,9,9,9,9,5,]
+
+
+
+```mojo
+
+```
