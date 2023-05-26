@@ -115,7 +115,8 @@ struct List[Type: AnyType]:
             
     fn add(self,_index:Int,other:Self):
         self.add(_index,other.data.load(0).bitcast[Type](),other.size())
-        
+    
+    
     fn add(self,_index:Int,data:Pointer[Type],_size:Int):
         var index =_index
         var size = self.size()
@@ -161,6 +162,18 @@ struct List[Type: AnyType]:
         for i in range(size):
             self.add(data[i])
             
+    fn addMany(self,size:Int,value:Type):
+        let data= Pointer[Type].alloc(size)
+        for i in range(size):
+            data.store(i, value)
+        self.add(data,size)
+        
+    fn addMany(self,index:Int,size:Int,value:Type):
+        let data= Pointer[Type].alloc(size)
+        for i in range(size):
+            data.store(i, value)
+        self.add(index,data,size)
+        
     fn remove(self):
         var size = self.size()
         if(size>0):
@@ -283,11 +296,14 @@ test1.add(2,test1[1:3],2)
 test1.printArray()
 test1.remove(1,2)
 test1.printArray()
+test1.addMany(12,9)
+test1.printArray()
 ```
 
     [8,56,45,544,488,]
     [8,56,56,45,45,544,488,]
     [8,45,45,544,488,]
+    [8,45,45,544,488,9,9,9,9,9,9,9,9,9,9,9,9,]
 
 
 
