@@ -168,6 +168,21 @@ struct List[Type: AnyType]:
             data.store(i, value)
         self.add(data,size)
         
+    fn addEmpty(self,addSize:Int):
+        var size = self.size()
+        var newCap = self.capacity()
+        size = size + addSize
+        self._size.set(size)
+        while(size>newCap):
+            newCap = newCap * 2
+            
+        if newCap>self.capacity():
+            self.data.store(0, Pointer[Type].alloc(newCap))
+            self._cap.set(newCap)
+            for i in range(size-1):#previous size
+                self.data.load(0).store(i,self.data_back.load(0).load(i))
+            self.data_back.store(0,self.data.load(0))
+            
     fn addMany(self,index:Int,size:Int,value:Type):
         let data= Pointer[Type].alloc(size)
         for i in range(size):
@@ -308,6 +323,18 @@ test1.printArray()
 
 
 ```mojo
+test1.remove(3,12)
+test1.printArray()
+test1.addEmpty(5)
+test1.printArray()
+```
+
+    [8,45,45,9,9,]
+    [8,45,45,9,9,9,9,9,9,9,]
+
+
+
+```mojo
 var test2:List[List[Int]] = List[List[Int]]()
 test2.add(test1.copy())
 print(test2.size())
@@ -321,7 +348,7 @@ print(test2.size())
 print(test2[0].size())
 ```
 
-    5
+    10
 
 
 
@@ -344,6 +371,17 @@ test2.add(test1.copy())
 
 
 ```mojo
+test2.addEmpty(2)
+```
+
+
+```mojo
+test2[2]= test1.copy()
+test2[3]= test1.copy()
+```
+
+
+```mojo
 test2[0].add(8)
 ```
 
@@ -353,8 +391,10 @@ ListManager.print2D(test2)
 ```
 
     2d[
-    [8,45,45,544,488,9,8,]
-    [8,45,45,544,488,]
+    [8,45,45,9,9,9,9,9,9,9,9,8,]
+    [8,45,45,9,9,9,9,9,9,9,]
+    [8,45,45,9,9,9,9,9,9,9,]
+    [8,45,45,9,9,9,9,9,9,9,]
     ]
 
 
@@ -375,8 +415,8 @@ ListManager.print3D(test5)
 
     3d[
     2d[
-    [8,45,45,544,488,9,8,]
-    [8,45,45,544,488,]
+    [8,45,45,9,9,9,9,9,9,9,9,8,]
+    [8,45,45,9,9,9,9,9,9,9,]
     ]
     ]
 
