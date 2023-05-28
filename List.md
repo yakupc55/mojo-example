@@ -301,6 +301,12 @@ struct ListManager:
     @staticmethod
     fn getMeanList(inList :List[F64])->F64:
         let size :Int = inList.size()
+        
+        if (size == 0):
+            return F64(0)
+        if (size == 1):
+            return F64(inList[0])
+        
         var result:F64 = (inList[0]/2.0)+(inList[1]/2.0)
         for i in range(2,size):
             result = result + ((inList[i] - result)/(i+1)) 
