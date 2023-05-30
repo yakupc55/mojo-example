@@ -19,6 +19,9 @@ struct Data[Type: AnyType]:
     
     fn get(self)->Type:
         return self.__data.load(0)
+    
+    fn __del__(owned self):
+        self.__data.free()
 ```
 
 
