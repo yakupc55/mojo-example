@@ -5,7 +5,7 @@
 ```mojo
 from Pointer import DTypePointer
 from DType import DType
-from Random import rand,random_f64
+from Random import rand,random_float64
 from Memory import memset_zero
 from PythonInterface import Python
 from Time import now
@@ -50,7 +50,7 @@ struct PrintService:
         print(result)
 
     @staticmethod
-    fn printArray(array:Pointer[F64],size:Int):
+    fn printArray(array:Pointer[Float64],size:Int):
         var result:String = String("[")
         for i in range(size):
             result = result + String(array.load(i)) + ","
@@ -86,7 +86,7 @@ struct List[Type: AnyType]:
         for i in range(size.get()):
             data.load(0).store(i,self.data.load(0).load(i))
         return Self{_size:size,_cap:cap,data:data,data_back:data_back}
-    
+        
     fn size(self)->Int:
         return self._size.get()
         
@@ -254,8 +254,8 @@ struct List[Type: AnyType]:
         #1d lists
         if Type==Int:
             PrintService.printArray(self.data.load(0).bitcast[Int](),self.size())
-        if Type==F64:
-            PrintService.printArray(self.data.load(0).bitcast[F64](),self.size())
+        if Type==Float64:
+            PrintService.printArray(self.data.load(0).bitcast[Float64](),self.size())
 ```
 
 
@@ -270,7 +270,7 @@ struct ListManager:
         print("]")
         
     @staticmethod
-    fn print2D(array: List[List[F64]]):
+    fn print2D(array: List[List[Float64]]):
         print("2d[")
         for i in range(array.size()):
             let new = array[i]
@@ -286,7 +286,7 @@ struct ListManager:
         print("]")
     
     @staticmethod
-    fn print3D(array: List[List[List[F64]]]):
+    fn print3D(array: List[List[List[Float64]]]):
         print("3d[")
         for i in range(array.size()):
             let new = array[i]
@@ -302,7 +302,7 @@ struct ListManager:
         print("]")
     
     @staticmethod
-    fn print4D(array: List[List[List[List[F64]]]]):
+    fn print4D(array: List[List[List[List[Float64]]]]):
         print("4d[")
         for i in range(array.size()):
             let new = array[i]
@@ -310,15 +310,15 @@ struct ListManager:
         print("]")
         
     @staticmethod
-    fn getMeanList(inList :List[F64])->F64:
+    fn getMeanList(inList :List[Float64])->Float64:
         let size :Int = inList.size()
         
         if (size == 0):
-            return F64(0)
+            return Float64(0)
         if (size == 1):
-            return F64(inList[0])
+            return Float64(inList[0])
         
-        var result:F64 = (inList[0]/2.0)+(inList[1]/2.0)
+        var result:Float64 = (inList[0]/2.0)+(inList[1]/2.0)
         for i in range(2,size):
             result = result + ((inList[i] - result)/(i+1)) 
         return result
@@ -330,34 +330,51 @@ struct MyNn:
     var rowSize: Data[Int]
     var inputSize: Data[Int]
     var outputSize: Data[Int]
-    var networkRate: Data[F64]
-    var nList: List[List[F64]]
-    var nListp: List[List[F64]]
-    var inputList: List[F64]
-    var outputList: List[F64]
-    var weights: List[List[List[F64]]]
+    var networkRate: Data[Float64]
+    var nList: List[List[Float64]]
+    var nListp: List[List[Float64]]
+    var inputList: List[Float64]
+    var outputList: List[Float64]
+    var weights: List[List[List[Float64]]]
         
-    fn __init__(inout self,inputSize:Int,outputSize:Int,networkRate:F64):
+    fn __init__(inout self,inputSize:Int,outputSize:Int,networkRate:Float64):
         self.inputSize = Data[Int](inputSize)
         self.outputSize = Data[Int](outputSize)
         self.rowSize = Data[Int](0)
-        self.networkRate = Data[F64](networkRate)
-        self.nList = List[List[F64]]()
-        self.nListp = List[List[F64]]()
-        self.inputList = List[F64]()
-        self.inputList.addMany(inputSize,F64(0.0))
-        self.outputList = List[F64]()
-        self.outputList.addMany(outputSize,F64(0.0))
-        self.weights = List[List[List[F64]]]()
+        self.networkRate = Data[Float64](networkRate)
+        self.nList = List[List[Float64]]()
+        self.nListp = List[List[Float64]]()
+        self.inputList = List[Float64]()
+        self.inputList.addMany(inputSize,Float64(0.0))
+        self.outputList = List[Float64]()
+        self.outputList.addMany(outputSize,Float64(0.0))
+        self.weights = List[List[List[Float64]]]()
         
         #add first list from input list
         self.nList.add(self.inputList)
         self.nListp.add(self.inputList.copy())
+    
+        
+    fn __copyinit__(inout self, other: Self):
+        self.rowSize = other.rowSize
+        self.inputSize = other.inputSize
+        self.outputSize = other.outputSize
+        self.networkRate = other.networkRate
+        self.nList = List[List[Float64]]()
+        self.nListp = other.nListp.copy()
+        let size = other.nList.size()-2
+        self.inputList = other.inputList.copy()
+        self.outputList = other.outputList.copy()
+        self.nList.add(self.inputList)
+        for i in range(size):
+            self.nList.add(other.nListp[i+1])
+        self.nList.add(self.outputList)
+        self.weights = other.weights.copy()
         
     fn addRow(self,size:Int):
-        let newList = List[F64]()
+        let newList = List[Float64]()
         let rowSize = self.rowSize.get()
-        newList.addMany(size,F64(0.0))
+        newList.addMany(size,Float64(0.0))
         let prSize = self.nList[rowSize].size()
         self.rowSize.set(rowSize+1)
         self.nList.add(newList)
@@ -365,8 +382,8 @@ struct MyNn:
         self.addWeightRow(size,prSize)
     
     fn addWeightRow(self,size:Int,prSize:Int):
-        let newRList = List[List[F64]]()
-        let newCList = List[F64]()
+        let newRList = List[List[Float64]]()
+        let newCList = List[Float64]()
         newCList.addMany(prSize,1.0/prSize)
         for i in range(size):
             newRList.add(newCList.copy())
@@ -390,15 +407,15 @@ struct MyNn:
         print("weights:")
         ListManager.print3D(self.weights)
         
-    fn _copyToList(self,mainList: List[F64],inputList: List[F64]):
+    fn _copyToList(self,mainList: List[Float64],inputList: List[Float64]):
         for i in range(mainList.size()):
             mainList[i] = inputList[i] 
             
-    fn forwardFeed(self, inputList: List[F64]):
+    fn forwardFeed(self, inputList: List[Float64]):
         self._copyToList(self.inputList,inputList)
         for r in range(1,self.nList.size()):
             for i in range(self.nList[r].size()):
-                var total:F64 = F64(0.0)
+                var total:Float64 = Float64(0.0)
                 for j in range(self.nList[r-1].size()):
                     total = total + (self.weights[r-1][i][j] * self.nList[r-1][j])
                 self.nList[r][i] = total
@@ -407,21 +424,21 @@ struct MyNn:
         for x in range(self.weights.size()):
             for y in range(self.weights[x].size()):
                 for z in range(self.weights[x][y].size()):
-                    self.weights[x][y][z]=self.weights[x][y][z]*( (random_f64()/10) + 0.95)
+                    self.weights[x][y][z]=self.weights[x][y][z]*( (random_float64()/10) + 0.95)
                     
-    fn backwardFeed(self,outputList:List[F64]):
+    fn backwardFeed(self,outputList:List[Float64]):
         self._copyToList(self.nListp[-1],outputList)
-        var meanT:F64 = F64(0.0)
-        var distance:F64 = F64(0.0)
-        var multi:F64 = F64(0.0)
-        var data:F64 = F64(0.0)
-        var rate:F64 = F64(0.0)
-        var add:F64 = F64(0.0)
-        var distanceM:F64 = F64(0.0)
-        var distanceT:F64 = F64(0.0)
+        var meanT:Float64 = Float64(0.0)
+        var distance:Float64 = Float64(0.0)
+        var multi:Float64 = Float64(0.0)
+        var data:Float64 = Float64(0.0)
+        var rate:Float64 = Float64(0.0)
+        var add:Float64 = Float64(0.0)
+        var distanceM:Float64 = Float64(0.0)
+        var distanceT:Float64 = Float64(0.0)
 
         for r in range(self.nList.size()-1,0,-1):
-            distanceT = F64(0.0)
+            distanceT = Float64(0.0)
             let size = self.nList[r-1].size()
             meanT = ListManager.getMeanList(self.nList[r-1])
             
@@ -441,10 +458,9 @@ struct MyNn:
                     distanceM = distanceT/size
                     self.nListp[r-1][i] = distanceM + self.nList[r-1][i]                
                     
-    fn forwandAndbackward(self,inputList:List[F64],outputList:List[F64]):
+    fn forwandAndbackward(self,inputList:List[Float64],outputList:List[Float64]):
         self.forwardFeed(inputList)
         self.backwardFeed(outputList)
-
 ```
 
 
@@ -486,8 +502,8 @@ test1.printWeights()
 
 
 ```mojo
-let inputList1 = List[F64]()
-inputList1.addMany(4,F64(0.1))
+let inputList1 = List[Float64]()
+inputList1.addMany(4,Float64(0.1))
 test1.forwardFeed(inputList1)
 test1.printAllRows()
 test1.printAllRowsP()
@@ -533,22 +549,22 @@ test1.printWeights()
     weights:
     3d[
     2d[
-    [0.33034376785730496,0.34618827903802329,0.32207328505529353,]
-    [0.32884463428522365,0.32117031226746851,0.33184357614091542,]
+    [0.32105125959129199,0.33195500440077397,0.32396530620708258,]
+    [0.33929549055802283,0.34782309654089127,0.33398054573409153,]
     ]
     2d[
-    [0.49761500845789264,0.52158372003287756,]
-    [0.48576241920427748,0.52044609427678945,]
+    [0.47672860552324237,0.50148500965705289,]
+    [0.47538490930307992,0.47834211186312836,]
     ]
     2d[
-    [0.51804299179864688,0.50029779375724437,]
+    [0.50933863562045223,0.52152182474848463,]
     ]
     ]
 
 
 
 ```mojo
-let outputList1 = List[F64]()
+let outputList1 = List[Float64]()
 outputList1.add((0.2))
 test1.backwardFeed(outputList1)
 test1.printAllRows()
@@ -565,15 +581,15 @@ test1.printWeights()
     weights:
     3d[
     2d[
-    [0.33216065858052013,0.34809231457273243,0.32384468812309763,]
-    [0.33065327977379239,0.32293674898493957,0.33366871580969043,]
+    [0.32281704151904411,0.33378075692497822,0.32574711539122153,]
+    [0.34116161575609194,0.34973612357186618,0.33581743873562903,]
     ]
     2d[
-    [0.50035189100441102,0.52445243049305834,]
-    [0.48843411250990099,0.52330854779531177,]
+    [0.47935061285362018,0.50424317721016665,]
+    [0.47799952630424686,0.48097299347837558,]
     ]
     2d[
-    [0.52374146470843197,0.50580106948857406,]
+    [0.51494136061227724,0.52725856482071798,]
     ]
     ]
 
@@ -595,15 +611,15 @@ test1.printWeights()
     weights:
     3d[
     2d[
-    [0.33398754220271298,0.35000682230288244,0.32562583390777466,]
-    [0.33247187281254825,0.32471290110435674,0.33550389374664374,]
+    [0.32459253524739884,0.3356165510880656,0.32753872452587324,]
+    [0.34303800464275047,0.35165967225151146,0.33766443464867496,]
     ]
     2d[
-    [0.50310382640493523,0.52733691886077017,]
-    [0.49112050012870545,0.52618674480818595,]
+    [0.48198704122431507,0.50701651468482256,]
+    [0.48062852369892023,0.48361834494250666,]
     ]
     2d[
-    [0.5295026208202247,0.51136488125294832,]
+    [0.52060571557901225,0.53305840903374591,]
     ]
     ]
 
@@ -611,21 +627,31 @@ test1.printWeights()
 
 ```mojo
 test1.forwandAndbackward(inputList1,outputList1)
+test1.printAllRows()
+test1.outputList.printArray()
 test1.printWeights()
 ```
 
+    all rows:
+    2d[
+    [0.10000000000000001,0.10000000000000001,0.10000000000000001,]
+    [0.098774781086133773,0.1032362111542937,]
+    [0.09995062845200145,0.097400902788687169,]
+    [0.10395523872681432,]
+    ]
+    [0.10395523872681432,]
     weights:
     3d[
     2d[
-    [0.33570175513163664,0.35180325523581774,0.32729712982137332,]
-    [0.33417830646908508,0.32637951133056553,0.33722588944915305,]
+    [0.32630718293813804,0.33738943272213767,0.32926893534913787,]
+    [0.34485008982224535,0.35351730106140561,0.3394481341495702,]
     ]
     2d[
-    [0.50570787494071212,0.53002062318020038,]
-    [0.49366252336949229,0.52886459570267541,]
+    [0.48447688903700764,0.50975396047459265,]
+    [0.48311135368416142,0.48622946107753312,]
     ]
     2d[
-    [0.53497314705169519,0.51658019898999585,]
+    [0.52617693576178726,0.53861737023464684,]
     ]
     ]
 
