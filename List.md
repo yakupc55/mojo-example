@@ -39,7 +39,7 @@ struct PrintService:
         print(result)
 
     @staticmethod
-    fn printArray(array:Pointer[F64],size:Int):
+    fn printArray(array:Pointer[Float64],size:Int):
         var result:String = String("[")
         for i in range(size):
             result = result + String(array.load(i)) + ","
@@ -75,7 +75,7 @@ struct List[Type: AnyType]:
         for i in range(size.get()):
             data.load(0).store(i,self.data.load(0).load(i))
         return Self{_size:size,_cap:cap,data:data,data_back:data_back}
-    
+        
     fn size(self)->Int:
         return self._size.get()
         
@@ -243,8 +243,8 @@ struct List[Type: AnyType]:
         #1d lists
         if Type==Int:
             PrintService.printArray(self.data.load(0).bitcast[Int](),self.size())
-        if Type==F64:
-            PrintService.printArray(self.data.load(0).bitcast[F64](),self.size())
+        if Type==Float64:
+            PrintService.printArray(self.data.load(0).bitcast[Float64](),self.size())
 ```
 
 
@@ -259,7 +259,7 @@ struct ListManager:
         print("]")
         
     @staticmethod
-    fn print2D(array: List[List[F64]]):
+    fn print2D(array: List[List[Float64]]):
         print("2d[")
         for i in range(array.size()):
             let new = array[i]
@@ -275,7 +275,7 @@ struct ListManager:
         print("]")
     
     @staticmethod
-    fn print3D(array: List[List[List[F64]]]):
+    fn print3D(array: List[List[List[Float64]]]):
         print("3d[")
         for i in range(array.size()):
             let new = array[i]
@@ -291,7 +291,7 @@ struct ListManager:
         print("]")
     
     @staticmethod
-    fn print4D(array: List[List[List[List[F64]]]]):
+    fn print4D(array: List[List[List[List[Float64]]]]):
         print("4d[")
         for i in range(array.size()):
             let new = array[i]
@@ -299,15 +299,15 @@ struct ListManager:
         print("]")
         
     @staticmethod
-    fn getMeanList(inList :List[F64])->F64:
+    fn getMeanList(inList :List[Float64])->Float64:
         let size :Int = inList.size()
         
         if (size == 0):
-            return F64(0)
+            return Float64(0)
         if (size == 1):
-            return F64(inList[0])
+            return Float64(inList[0])
         
-        var result:F64 = (inList[0]/2.0)+(inList[1]/2.0)
+        var result:Float64 = (inList[0]/2.0)+(inList[1]/2.0)
         for i in range(2,size):
             result = result + ((inList[i] - result)/(i+1)) 
         return result
