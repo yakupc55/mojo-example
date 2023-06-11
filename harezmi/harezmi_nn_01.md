@@ -327,6 +327,9 @@ fn round(num:Float64)->Int:
     else:
         return intNum+1
 
+fn roundBigF(num:Float64)->Float64:
+    let num2 = num.cast[DType.float32]()
+    return num2.cast[DType.float64]()
 ```
 
 # Network Class
@@ -487,10 +490,10 @@ struct HNn:
             process += String(",") + alpha[i]
         result += process + ") : "
         
-        let x:Float64= self.weights[0][0][0]
+        let x:Float64= roundBigF(self.weights[0][0][0])
         process = String(x)+"x"
         for i in range(1,self.inputSize.get()):
-            let num:Float64= self.weights[0][0][i]
+            let num:Float64= roundBigF(self.weights[0][0][i])
             if num>=0:
                 process += String("+")
             process += String(num) + alpha[i]
@@ -545,14 +548,14 @@ ListManager.print2D(inputList)
 ```
 
     2d[
-    [2.0,7.0,]
-    [31.0,19.0,]
-    [22.0,10.0,]
-    [3.0,28.0,]
-    [28.0,38.0,]
-    [16.0,22.0,]
-    [34.0,3.0,]
-    [4.0,22.0,]
+    [40.0,21.0,]
+    [12.0,5.0,]
+    [38.0,4.0,]
+    [21.0,16.0,]
+    [12.0,37.0,]
+    [22.0,20.0,]
+    [38.0,3.0,]
+    [31.0,32.0,]
     ]
 
 
@@ -569,7 +572,7 @@ for i in range(inputList.size()):
 outputList.printArray()
 ```
 
-    [-51,194,176,-269,-54,-34,409,-190,]
+    [289,101,450,97,-251,66,461,51,]
 
 
 ## normal type result : 
@@ -582,7 +585,7 @@ normalNetwork.finishRows()
 
 #train network
 let start= now()
-trainNetwork(normalNetwork,inputList,outputList,8,15,1)
+trainNetwork(normalNetwork,inputList,outputList,8,20,1)
 let end = now()
 var result = end - start
 print(result,"ns",result/1000000.0,"ms")
@@ -591,15 +594,15 @@ print(result,"ns",result/1000000.0,"ms")
 testNetworkRate(normalNetwork,inputList,outputList,True,True)
 ```
 
-    5891 ns 0.0058910000000000004 ms
-    -51.0 -51
-    194.0 194
-    176.0 176
-    -269.0 -269
-    -54.0 -54
-    -34.0 -34
-    409.0 409
-    -190.0 -190
+    6353 ns 0.0063530000000000001 ms
+    289.0 289
+    101.0 101
+    450.0 450
+    97.0 97
+    -251.0 -251
+    66.0 66
+    461.0 461
+    51.0 51
     success rate: 100.0 %
 
 
@@ -623,3 +626,13 @@ normalNetwork.giveTheFormula()
 
     f(x,y) : 13.0x-11.0y
 
+
+
+```mojo
+
+```
+
+
+```mojo
+
+```
