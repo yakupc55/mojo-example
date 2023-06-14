@@ -348,12 +348,14 @@ alias Synapsis_addType:Int = 1
 
 @register_passable
 struct Synapsis:
+    var backwardFeedRate:Data[Float64]
+    var isChangeable:Bool
     var startNoronIndex: Data[Int]
     var endNoronIndex: Data[Int]
     var value: Data[Float64]
     var type: Data[Int]
-    fn __init__(start:Int,end:Int,type:Int,value:Float64)->Self:
-        return Self{startNoronIndex:start,endNoronIndex:end,type:type , value:value}
+    fn __init__(start:Int,end:Int,type:Int,value:Float64,isChangeable:Bool,rate:Float64)->Self:
+        return Self{startNoronIndex:start,endNoronIndex:end,type:type , value:value,isChangeable:isChangeable,backwardFeedRate:rate}
 
 @register_passable
 struct Noron:
@@ -409,14 +411,13 @@ struct HNn2:
         self.synapsisList = List[Synapsis]()
         self.factorSynapsises = List[Synapsis]()
         self.outputSynapsises = List[Synapsis]()
-        self.remainSynapsis = Data[Synapsis](Synapsis(0,0,0,0))
+        self.remainSynapsis = Data[Synapsis](Synapsis(0,0,0,0,True,1.0))
         #functions
         self.addNorons()
         self.createNoronList()
         self.createSynapsisList()
         self.createBackList()
         self.shakeWeights()
-        self.resetOutputSynapsis()
         
     fn addNorons(self):
         for i in range(self.inputSize.get()):
@@ -453,21 +454,21 @@ struct HNn2:
     fn createSynapsisList(self):
         #factor synapsis
         for i in range(self.inputNorons.size()):
-            self.factorSynapsises.add( Synapsis(self.inputNorons[i].index.get(),self.factorNoron.index.get(),Synapsis_factorType,1) )
+            self.factorSynapsises.add( Synapsis(self.inputNorons[i].index.get(),self.factorNoron.index.get(),Synapsis_factorType,1,True,1.0) )
             self.factorNoron.synapsisIndexList.add(i)
         self.synapsisList.add(self.factorSynapsises)
         
         #remain synapsis
-        self.remainSynapsis.set( Synapsis(self.remainNoron.index.get(),self.remainResultNoron.index.get(),Synapsis_addType,0.0) )
+        self.remainSynapsis.set( Synapsis(self.remainNoron.index.get(),self.remainResultNoron.index.get(),Synapsis_addType,0.0,True,10.0) )
         self.synapsisList.add(self.remainSynapsis.get())
         self.remainResultNoron.synapsisIndexList.add(self.inputSize.get())
         
         var lastIndex = self.inputSize.get()+1
         #outpus synapsis
-        self.outputSynapsises.add( Synapsis(self.factorNoron.index.get(),self.outputNoron.index.get(),Synapsis_factorType,1) )
+        self.outputSynapsises.add( Synapsis(self.factorNoron.index.get(),self.outputNoron.index.get(),Synapsis_factorType,1,False,1.0) )
         self.outputNoron.synapsisIndexList.add(lastIndex)
         lastIndex = lastIndex + 1
-        self.outputSynapsises.add( Synapsis(self.remainResultNoron.index.get(),self.outputNoron.index.get(),Synapsis_factorType,1) )
+        self.outputSynapsises.add( Synapsis(self.remainResultNoron.index.get(),self.outputNoron.index.get(),Synapsis_factorType,1,False,1.0) )
         self.outputNoron.synapsisIndexList.add(lastIndex)
         self.synapsisList.add(self.outputSynapsises)
     
@@ -499,7 +500,8 @@ struct HNn2:
                         process = synapsis.value.get() + inputNoron.data.get()
                     # print("value",synapsis.value.get())
                     total = total + process
-                noron.data.set(total)
+                    if noron.synapsisIndexList.size()>0:
+                        noron.data.set(total)
     
     fn getOutput(self)->Float64:
         return self.outputNoron.data.get()
@@ -526,7 +528,8 @@ struct HNn2:
     fn shakeWeights(self):
         for i in range(self.synapsisList.size()):
             let sp = self.synapsisList[i]
-            sp.value.set(( (random_float64()/10) + 0.95) * sp.value.get())
+            if sp.isChangeable:
+                sp.value.set(( (random_float64()/10) + 0.95) * sp.value.get())
                     
     fn backwardFeed(self,output:Float64):
         self.copyOutputToBackList(output)
@@ -563,30 +566,24 @@ struct HNn2:
                 let synapsisSize = endNoron.synapsisIndexList.size()
                 for i in range(synapsisSize):
                     let synapsis = self.synapsisList[ endNoron.synapsisIndexList[i] ]
-                    # print("index : ",endNoron.synapsisIndexList[i]) 
-                    let startNoron = self.noronList[ synapsis.startNoronIndex.get() ]
-                    data = startNoron.data.get()
-                    rate = data/meanT
-                    multi = rate * distance * self.networkRate.get()
-                    # print("i : ",i," ---- data : ",data," rate : ",rate," multi : ",multi)
-                    # print(" value : " , synapsis.value.get())
-                    synapsis.value.set(synapsis.value.get() + multi)
+                    if synapsis.isChangeable:
+                        # print("index : ",endNoron.synapsisIndexList[i]) 
+                        let startNoron = self.noronList[ synapsis.startNoronIndex.get() ]
+                        data = startNoron.data.get()
+                        rate = data/meanT
+                        multi = rate * distance * self.networkRate.get() * synapsis.backwardFeedRate.get()
+                        # print("i : ",i," ---- data : ",data," rate : ",rate," multi : ",multi)
+                        # print(" value : " , synapsis.value.get())
+                        synapsis.value.set(synapsis.value.get() + multi)
                     
                 for i in range(startSize):
                     distanceM = distanceT/startSize
                     let newBackList = self.backRowList[r-1]
                     newBackList[i].data.set( distanceM + noronsStartList[i].data.get())
-    
-    fn resetOutputSynapsis(self):
-        # for i in range(self.outputSynapsises.size()):
-        #     self.outputSynapsises[i].value.set(1)
-        self.outputSynapsises[0].value.set(1)
-        self.outputSynapsises[1].value.set(1)
         
     fn forwardAndBackwardFeed(self,inputList: List[Float64],output:Float64):
         self.forwardFeed(inputList)
         self.backwardFeed(output)
-        self.resetOutputSynapsis()
         
     fn printSynapsisList(self):
         let theList = self.synapsisListToFloatList(self.synapsisList)
@@ -670,12 +667,12 @@ fn testNetworkRate2(nn:HNn2,inputList:List[List[Float64]], outputList:List[Int],
 
 
 ```mojo
-alias trainSize:Int = 5
+alias trainSize:Int = 12
 var inputList = List[List[Float64]]()
 for i in range(trainSize):
     let values = List[Float64]()
     values.add(random_si64(2,40).to_int())
-    values.add(random_si64(4,41).to_int())
+    values.add(random_si64(1,41).to_int())
     values.add(random_si64(3,39).to_int())
     inputList.add(values)
 ListManager.print2D(inputList)
@@ -685,29 +682,36 @@ for i in range(inputList.size()):
     let num1 = inputList[i][0]
     let num2 = inputList[i][1]
     let num3 = inputList[i][2]
-    let calculate = (num1*-2)+(num2*3)+(num3*4)+10
+    let calculate = (num1*-2)+(num2*1)+(num3*2)+10
     outputList.add(toInt(calculate))
 outputList.printArray()
 ```
 
     2d[
-    [2.0,8.0,30.0,]
-    [19.0,24.0,11.0,]
-    [3.0,29.0,28.0,]
-    [38.0,18.0,22.0,]
-    [34.0,5.0,4.0,]
+    [25.0,8.0,33.0,]
+    [8.0,41.0,12.0,]
+    [11.0,5.0,11.0,]
+    [26.0,29.0,32.0,]
+    [29.0,31.0,27.0,]
+    [26.0,3.0,25.0,]
+    [10.0,14.0,28.0,]
+    [6.0,32.0,22.0,]
+    [23.0,25.0,15.0,]
+    [29.0,6.0,8.0,]
+    [20.0,36.0,33.0,]
+    [23.0,31.0,14.0,]
     ]
-    [150,88,203,76,-27,]
+    [34,59,15,51,37,11,60,74,19,-26,72,23,]
 
 
 
 ```mojo
 #craete networl
-var normalNetwork:HNn2 = HNn2(3,1,0.02)
+var normalNetwork:HNn2 = HNn2(3,1,0.03)
 
 #train network
 let start= now()
-trainNetwork2(normalNetwork,inputList,outputList,trainSize,100000,1)
+trainNetwork2(normalNetwork,inputList,outputList,trainSize,5000,1)
 
 let end = now()
 var result = end - start
@@ -716,10 +720,22 @@ print(result,"ns",result/1000000.0,"ms")
 # normalNetwork.printNoronList()
 
 #test network
-testNetworkRate2(normalNetwork,inputList,outputList,False,True)
+testNetworkRate2(normalNetwork,inputList,outputList,True,True)
 ```
 
-    540013397 ns 540.01339700000005 ms
+    49582183 ns 49.582183000000001 ms
+    33.999999999999957 34
+    58.999999999999829 59
+    14.999999999999783 15
+    51.000000000000014 51
+    37.000000000000057 37
+    10.999999999999957 11
+    59.999999999999794 60
+    73.999999999999787 74
+    18.999999999999972 19
+    -26.0 -26
+    71.999999999999957 72
+    22.999999999999982 23
     success rate: 100.0 %
 
 
@@ -728,7 +744,7 @@ testNetworkRate2(normalNetwork,inputList,outputList,False,True)
 normalNetwork.giveTheFormula()
 ```
 
-    f(x,y,z) : -2.0x+3.0y+4.0z+10.0
+    f(x,y,z) : -2.0x+1.0y+2.0z+10.0
 
 
 
